@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "praq"
+version = "0.0.1"
+dependencies = [
+  "numpy >= 2.0",
+  "jax",
+]
+authors = [{ name = "Jacob Dentes", email = "dentes@mit.edu" }]
+description = "PRAQ: a projected restarted algorithm for QUBO relaxations"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.optional-dependencies]
+# scipy is a test dependency only: tests/test_projection.py checks the closed-form
+# projections against minimize_scalar.  The solver itself never imports it.
+# (tests/reference.py also needs it, but transitively, through the experiment
+# repository's baselines/ -- which declares it in ../requirements.txt.)
+# No floor on pytest: the tests are plain scripts using bare asserts, and the
+# only pytest config below is testpaths and -v, stable for a decade.
+dev = ["pytest", "scipy >= 1.16.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.mypy]
+warn_return_any = true

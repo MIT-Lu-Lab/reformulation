@@ -1,0 +1,8 @@
+# Each child ignores its own build products, results and logs; its .gitignore
+# is the home for those, because the paths are named after that child's
+# env.sh variables.  This file is only for what the operating system and the
+# editors leave anywhere in the tree.
+.DS_Store
+__pycache__/
+*.py[cod]
+.ruff_cache/

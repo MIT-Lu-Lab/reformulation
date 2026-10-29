@@ -1,0 +1,54 @@
+name: CI (QUBO)
+
+on:
+  push:
+    branches: [main]
+    paths: ['qubo/**', '.github/workflows/ci-qubo.yml']
+  pull_request:
+    paths: ['qubo/**', '.github/workflows/ci-qubo.yml']
+  workflow_dispatch:
+
+# What the checks ARE lives in qubo/scripts/run_checks.sh, not here.  This
+# workflow only builds an environment and calls it, so CI and a local run
+# cannot drift apart and there is one place to add a check.
+#
+# One job rather than one per check: GitHub bills each job's minutes rounded
+# up, and several jobs would each pay a separate pip install.  Serial here
+# costs about half the billed minutes for the same coverage.  The two children
+# get a workflow each, filtered to their own paths, so a change to one does not
+# pay for the other.
+#
+# The CUDA check skips itself on a runner with no nvcc, and the licence- and
+# GPU-gated backends are not exercised: they report "unavailable" rather than
+# failing, so a job reaching for them would go green without testing anything.
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: qubo
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: qubo/requirements.txt
+      - name: Install
+        # The union of what the checks need: harness and baselines from
+        # requirements.txt, sphinx for the docs build, praq itself with its
+        # dev extra.  Each file is the home for its own dependencies.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r docs/requirements.txt
+          python -m pip install -e "praq-jax[dev]"
+      - name: Run the checks
+        # No env: block -- run_checks.sh sources env.sh, which is the single
+        # home for this child's paths.
+        run: scripts/run_checks.sh

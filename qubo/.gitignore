@@ -1,0 +1,36 @@
+# Local environment overrides.  env.sh holds the committed defaults; this file
+# is where you point them at your own paths.  See env.local.sh.example.
+/env.local.sh
+
+# The directories env.sh points at by default.  Everything the project
+# reads or produces lands here and none of it is tracked.
+/results/
+/bin/
+
+# Batch job logs.  scripts/*.sbatch write them here: an #SBATCH --output
+# directive cannot expand a variable, so it cannot point at $PRAQ_RESULTS_DIR
+# and the path has to be relative to the submit directory.  env.sh creates it.
+# The second line catches logs written to the root before that, which is how
+# three of them ended up committed.
+/logs/
+/*.out
+
+# Build products
+build/
+docs/_build/
+*.o
+*.a
+*.so
+*.mps
+*.mps.gz
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# macOS
+.DS_Store

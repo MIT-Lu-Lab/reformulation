@@ -1,0 +1,36 @@
+# Dependencies of harness/ and baselines/ -- the experiment machinery, not the
+# PRAQ library.  praq-jax declares its own in praq-jax/pyproject.toml (numpy and
+# jax at runtime; scipy and pytest under its dev extra).
+#
+#     $PRAQ_PYTHON -m pip install -r requirements.txt
+#
+# scipy is required, not optional: baselines/model.py builds the standard
+# linearization as a scipy.sparse matrix, and all three LP baselines go through
+# it.  gurobipy and a licence are needed only for --gurobi.
+
+numpy >= 2.0
+scipy >= 1.16.2
+optuna >= 5.0      # scripts/tune_praq.py: the TPE sampler
+matplotlib >= 3.8  # harness/figures.py: the benchmark figures
+
+# cupdlpx is needed only for --cupdlpx, and building it needs nvcc and a GPU,
+# so it is not installed by default.  Build it from the same checkout the CLI
+# comes from so the two cannot drift:
+#   CMAKE_ARGS="-DCMAKE_CUDA_ARCHITECTURES=89;90" pip install "$CUPDLPX_DIR"
+# The architecture list has to cover every GPU a job may land on.
+# cupdlpx >= 0.3.0
+
+# gurobipy >= 11.0
+
+# ortools is needed only for --maxflow, the roof dual as a maximum flow.  It
+# needs no licence and no GPU, so the only reason it is not installed by default
+# is its size; install it wherever an exact reference for the other backends is
+# wanted, which is what it is for.
+# ortools >= 9.15
+
+# nvidia-ml-py provides pynvml, which harness/memory.py uses to attribute GPU
+# memory to a process rather than to the card -- on a shared node the card is
+# carrying other people's work.  It is needed only by `run_benchmark.py
+# --memory`, and only for the device column: without it the host column is still
+# sampled and the device one stays empty.
+# nvidia-ml-py >= 12.0

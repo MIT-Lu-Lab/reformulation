@@ -1,0 +1,21 @@
+# Linting for the Python this repository owns.
+#
+#     ruff check .          # what `scripts/run_checks.sh lint` runs
+#     ruff check --fix .
+#
+# pria-jax/ has a ruff.toml of its own that extends this one; ruff applies the
+# nearest config to each file.
+line-length = 95
+target-version = "py310"
+extend-exclude = [".venv", "docs/_build", "results", "bin"]
+
+[lint]
+select = ["E", "W", "F", "I", "UP", "B", "C4", "RUF"]
+# A backend assembles its record's shared fields as a dict() of keywords and
+# splats it into Result(...); the literal form cannot be splatted as cleanly.
+ignore = ["C408"]
+
+[lint.per-file-ignores]
+# The scripts import _bootstrap for its side effect on sys.path, and must do
+# so before importing anything that lives there.
+"scripts/*.py" = ["E402"]

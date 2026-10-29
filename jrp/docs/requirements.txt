@@ -1,0 +1,6 @@
+# Documentation build only.  The runtime dependencies autodoc needs are declared
+# elsewhere and are not repeated here: ../requirements.txt for harness/ and
+# baselines/, and pria-jax/pyproject.toml for pria.
+sphinx >= 8.0
+furo
+myst-parser

@@ -1,0 +1,19 @@
+# The library's expressions run longer than the harness's -- stacked simplex
+# projections and permutation applications over four index spaces -- so it
+# gets more room than the root config allows.  Everything else is inherited.
+extend = "../ruff.toml"
+line-length = 110
+
+[lint]
+# `l` is the split point of a two-segment projection throughout the packed
+# layouts, and matches the index in the derivation.
+extend-ignore = ["E741"]
+
+[lint.per-file-ignores]
+# jax config has to be applied before the submodules that read it are
+# imported, and the assertion switch before the arrays it guards.
+"pria/solver.py" = ["E402"]
+"pria/jrp_problem.py" = ["E402"]
+# Tests run as scripts and set jax's x64 flag before importing anything that
+# reads it; test_upper_triangular imports its subject with a star.
+"tests/*.py" = ["E402", "F403", "F405"]
