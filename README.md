@@ -1,75 +1,87 @@
 # Reformulation for PDLP
 
-Code for **Reformulation Techniques for PDLP with Applications to QUBO and
-Joint Replenishment**, by Jacob Dentes, Haihao Lu and Jinwen Yang.
+This repository has the code for the paper *Reformulation Techniques for PDLP
+with Applications to QUBO and Joint Replenishment*, by Jacob Dentes, Haihao Lu
+and Jinwen Yang.
 
-A PDHG-type LP solver reads its formulation twice over: the cost of an
-iteration is the cost of multiplying by the constraint matrix, and the number
-of iterations is set by the geometry of the saddle problem. This repository
-holds the paper's two case studies. Each is an LP family rewritten so that its
-constraints are absorbed into the projection step of PDHG, together with the
-harness that measures the rewrite against a GPU LP solver running the original
-formulation.
+Every PDHG iteration on the original formulation multiplies one vector by the
+constraint matrix. It multiplies another vector by the transpose of that
+matrix. Those two products are the largest term in the cost of such an
+iteration. The number of iterations depends on the sharpness of the saddle
+problem and on the tolerance. A reformulation changes the cost of an iteration
+and the number of iterations.
 
-| | Problem | Solver | Backends measured against it |
+The paper studies two LP families. Each reformulation absorbs every constraint
+of its family into the projection steps of PDHG. Each subdirectory below has
+one solver, the wrappers for the baseline solvers, and a harness. A harness is
+the set of scripts that run the solvers and record the times.
+
+| | Problem | Solver | Baselines compared against the solver |
 |---|---|---|---|
-| [`qubo/`](qubo/) | LP relaxation of QUBO, equivalently the roof dual | **PRAQ**, in CUDA and in JAX | cuPDLPx, Gurobi, HiGHS, an OR-Tools max-flow oracle |
+| [`qubo/`](qubo/) | LP relaxation of the standard linearization of QUBO, whose optimum is the roof dual | **PRAQ**, in CUDA and in JAX | cuPDLPx, Gurobi, HiGHS, an OR-Tools max-flow solver |
 | [`jrp/`](jrp/) | LP relaxation of the joint replenishment problem | **PRIA**, in CUDA and in JAX | cuPDLPx, Gurobi, HiGHS |
 
-The two share a layout, a set of commands and a harness design, so what you
-learn in one carries to the other.
+The baseline solvers are external. This repository has only the wrappers that
+call them.
 
 ## Getting started
 
-Each child is self-contained and installs on its own:
+Install each child separately. `qubo/README.md` and `jrp/README.md` give the
+steps. Both start here.
 
 ```sh
 cd qubo          # or: cd jrp
-source env.sh    # every path the project uses; source it, do not execute it
+source env.sh    # sourcing sets the variables in the current shell
 ```
 
-[`qubo/README.md`](qubo/README.md) and [`jrp/README.md`](jrp/README.md) are the
-instructions, and each covers the same five things in the same order:
-installing the Python and CUDA sides, checking the install, reproducing the
-paper's experiments, drawing the figures, and tuning the restart schedule.
-Each child's `## Instances` section is how to point its solver at problems of
-your own.
+Each child README has sections for installation, experiments, layout, checks,
+documentation, instances and known gaps.
 
-A GPU is optional. The JAX implementation is the reference for everything else
-and runs on CPU, and each backend that wants a licence or a card reports itself
-unavailable, so a pass on a laptop runs the subset it can and says what it
-skipped.
+In each child, the JAX implementation is the reference for everything else. It
+runs on a CPU. The two CUDA implementations and cuPDLPx require a GPU. Gurobi
+requires a licence. A backend without its licence or its GPU reports
+`unavailable`. The run continues through the other backends. The run notes
+name each backend that reported `unavailable`.
 
 ## Reproducing the paper
 
-Benchmark instances are generated from fixed seeds rather than stored, so a
-pass builds its own: each child's `## Instances` section gives the families and
-sizes, and its `## Experiments` section gives the commands. Instances and
-iteration counts follow from the seeds. Solve times are measurements of the
-machine that took them, so a rerun reproduces the comparison rather than the
-seconds.
+The harness generates the benchmark instances at run time. The generator
+produces the same instance from the same family, size and seed. Each pass
+regenerates the instances the last pass measured. The `## Instances` section
+of each child gives the families and the sizes. The `## Experiments` section
+of each child gives the benchmark commands.
 
-The paper's runs used one NVIDIA H100 80GB for the GPU backends and CPU nodes
-for the rest, under a five-minute per-instance limit.
+Solve times vary with the hardware. Compare two solvers by the ratio of their
+times on one machine.
 
-## Layout
+We ran the GPU backends on one NVIDIA H100 80GB. We ran the other backends on
+CPU nodes. Each solve ran under the harness time limit, `TIME_LIMIT` in
+`harness/config.py`.
 
-| Path | What it is |
+## Top-level directories
+
+| Path | Contents |
 |---|---|
-| [`qubo/`](qubo/) | the QUBO case study: PRAQ, its baselines, its harness |
-| [`jrp/`](jrp/) | the joint replenishment case study: PRIA, its baselines, its harness |
-| `.github/workflows/` | one CI workflow per child, each filtered to that child's paths |
+| [`qubo/`](qubo/) | the QUBO case study. PRAQ, the baseline wrappers and the harness |
+| [`jrp/`](jrp/) | the joint replenishment case study. PRIA, the baseline wrappers and the harness |
+| `.github/workflows/` | one CI workflow per child |
 
-Each child owns its own `env.sh`, `requirements.txt`, `docs/` and `scripts/`,
-so neither depends on the other and neither depends on this directory.
+Each child has its own `env.sh`, `requirements.txt`, `baselines/`, `harness/`,
+`docs/`, `scripts/` and two solver directories. No code in `qubo/` imports
+code in `jrp/`. The scripts in each child resolve paths against that child. A child
+also runs after you copy it elsewhere. Each CI workflow is triggered
+by changes under its own child and by changes to the workflow file.
 
 ## Cluster runs
 
-Both children carry `scripts/*.sbatch` for Slurm. The `#SBATCH --partition`
-lines are the one site-local thing in this repository; set them to your
-cluster's partitions before the first submission. Every experiment also runs
-without a scheduler, which is what the child READMEs show first.
+Each child has two Slurm files in `scripts/`. One runs a benchmark pass. The
+other tunes the restart schedule. Every `#SBATCH --partition` line names
+`gpu`. Set that name to a partition of your own cluster before you submit.
+
+Each `scripts/*.sbatch` file wraps a command you can run in a shell. Each
+child README gives the shell command before the `sbatch` command. The GPU
+backends need a GPU in either form.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+The MIT License covers this code. See [LICENSE](LICENSE).
